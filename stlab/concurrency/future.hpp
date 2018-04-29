@@ -782,7 +782,7 @@ public:
     }
 
     void detach() const {
-        then([_hold = _p](auto f) {}, [](const auto&) {});
+        then([_hold = _p](auto) {}, [](const auto&) {});
     }
 
     void reset() { _p.reset(); }
@@ -873,7 +873,7 @@ public:
     }
 
     void detach() const {
-        then([_hold = _p](auto f) {}, []() {});
+        then([_hold = _p](auto) {}, []() {});
     }
 
     void reset() { _p.reset(); }
@@ -946,7 +946,7 @@ public:
     }
 
     void detach() const {
-        _p->then_r(unique_usage(_p), [_hold = _p](auto f) {}, [](auto&&) {});
+        _p->then_r(unique_usage(_p), [_hold = _p](auto) {}, [](auto&&) {});
     }
 
     void reset() { _p.reset(); }
@@ -995,7 +995,7 @@ struct assign_ready_future {
 template <>
 struct assign_ready_future<future<void>> {
     template <typename T>
-    static void assign(T& x, future<void>& f) {
+    static void assign(T& x, future<void>&) {
         x = std::move(typename T::value_type()); // to set the optional
     }
 };
@@ -1081,7 +1081,7 @@ struct when_any_shared<S, void> {
     }
 
     template <size_t index, typename FF>
-    void done(FF&& f) {
+    void done(FF&&) {
         auto before = _value_received.test_and_set();
         if (before == false) {
             _index = index;
@@ -1127,14 +1127,14 @@ auto apply_when_any_arg(F& f, P& p) {
 template <std::size_t i, typename P, typename T>
 void attach_when_arg_(const std::shared_ptr<P>& p, T a) {
     p->_holds[i] = std::move(a).recover([_w = std::weak_ptr<P>(p)](auto x) {
-        auto p = _w.lock();
-        if (!p) return;
+        auto _p = _w.lock();
+        if (!_p) return;
 
         auto error = x.error();
         if (error) {
-            p->failure(*error);
+            _p->failure(*error);
         } else {
-            p->template done<i>(x);
+            _p->template done<i>(x);
         }
     });
 }
@@ -1488,8 +1488,8 @@ auto async(E executor, F&& f, Args&&... args)
     auto p = package<result_type()>(
         executor, std::bind<result_type>(
                       [_f = std::forward<F>(f)](
-                          unwrap_reference_t<std::decay_t<Args>>&... args) mutable -> result_type {
-                          return _f(move_if<!is_reference_wrapper_v<std::decay_t<Args>>>(args)...);
+                          unwrap_reference_t<std::decay_t<Args>>&... _args) mutable -> result_type {
+                          return _f(move_if<!is_reference_wrapper_v<std::decay_t<Args>>>(_args)...);
                       },
                       std::forward<Args>(args)...));
 
@@ -1542,13 +1542,13 @@ struct value_setter<T, enable_if_copyable<T>> {
         sb._result = f(std::forward<Args>(args)...);
         sb._reduction_helper.value =
             (*sb._result)
-                .recover([_p = sb.shared_from_this()](future<R> f) {
-                    if (f.error()) {
-                        _p->_error = std::move(*f.error());
+                .recover([_p = sb.shared_from_this()](future<R> _f) {
+                    if (_f.error()) {
+                        _p->_error = std::move(*_f.error());
                         value_setter::proceed(*_p);
                         throw future_error(future_error_codes::reduction_failed);
                     }
-                    return *f.get_try();
+                    return *_f.get_try();
                 })
                 .then([_p = sb.shared_from_this()](auto) { value_setter::proceed(*_p); });
     }
@@ -1556,9 +1556,9 @@ struct value_setter<T, enable_if_copyable<T>> {
     template <typename F, typename... Args>
     static void set(shared_base<future<void>>& sb, F& f, Args&&... args) {
         sb._result = f(std::forward<Args>(args)...)
-                         .recover([_p = sb.shared_from_this()](future<void> f) {
-                             if (f.error()) {
-                                 _p->_error = std::move(*f.error());
+                         .recover([_p = sb.shared_from_this()](future<void> _f) {
+                             if (_f.error()) {
+                                 _p->_error = std::move(*_f.error());
                                  value_setter::proceed(*_p);
                                  throw future_error(future_error_codes::reduction_failed);
                              }
@@ -1594,7 +1594,7 @@ struct value_setter<T, enable_if_not_copyable<T>> {
         sb._result = f(std::forward<Args>(args)...);
         sb._reduction_helper.value =
             (*sb._result)
-                .then([](auto&& f) { return std::forward<decltype(f)>(f); })
+                .then([](auto&& _f) { return std::forward<decltype(_f)>(_f); })
                 .then([_p = sb.shared_from_this()](auto&) { proceed(*_p); });
     }
 };
@@ -1664,7 +1664,7 @@ auto shared_base<void>::recover(S s, F&& f)
 
 template <typename T>
 auto shared_base<T, enable_if_copyable<T>>::reduce(future<future<void>>&& r) -> future<void> {
-    return std::move(r).then([](auto f) {});
+    return std::move(r).then([](auto) {});
 }
 
 template <typename T>
@@ -1684,7 +1684,7 @@ auto shared_base<T, enable_if_not_copyable<T>>::reduce(future<future<R>>&& r) ->
 /**************************************************************************************************/
 
 inline auto shared_base<void>::reduce(future<future<void>>&& r) -> future<void> {
-    return std::move(r).then([](auto f) {});
+    return std::move(r).then([](auto) {});
 }
 
 template <typename R>

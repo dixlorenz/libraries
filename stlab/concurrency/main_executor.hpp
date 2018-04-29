@@ -54,9 +54,9 @@ struct main_executor_type {
         using f_t = decltype(f);
 
         dispatch_async_f(dispatch_get_main_queue(), new f_t(std::move(f)), [](void* f_) {
-            auto f = static_cast<f_t*>(f_);
-            (*f)();
-            delete f;
+            auto _f = static_cast<f_t*>(f_);
+            (*_f)();
+            delete _f;
         });
     }
 };

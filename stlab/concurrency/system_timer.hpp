@@ -68,9 +68,9 @@ struct system_timer_type {
             dispatch_time(0, duration_cast<nanoseconds>(when - steady_clock::now()).count()),
             dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), new f_t(std::move(f)),
             [](void* f_) {
-                auto f = static_cast<f_t*>(f_);
-                (*f)();
-                delete f;
+                auto _f = static_cast<f_t*>(f_);
+                (*_f)();
+                delete _f;
             });
     }
 };

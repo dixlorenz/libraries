@@ -62,7 +62,9 @@ private:
         dispatch_group_t _group = dispatch_group_create();
         ~group() {
             dispatch_group_wait(_group, DISPATCH_TIME_FOREVER);
+            #if OS_OBJECT_HAVE_OBJC_SUPPORT == 0
             dispatch_release(_group);
+            #endif
         }
     };
 
@@ -77,9 +79,9 @@ public:
         dispatch_group_async_f(g._group,
                                dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                                new f_t(std::move(f)), [](void* f_) {
-                                   auto f = static_cast<f_t*>(f_);
-                                   (*f)();
-                                   delete f;
+                                   auto _f = static_cast<f_t*>(f_);
+                                   (*_f)();
+                                   delete _f;
                                });
     }
 };

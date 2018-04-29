@@ -48,7 +48,7 @@ class task<R(Args...)> {
     }
 
     template <class F>
-    static auto is_empty(const F& f) -> std::enable_if_t<!possibly_empty_t<F>::value, bool> {
+    static auto is_empty(const F&) -> std::enable_if_t<!possibly_empty_t<F>::value, bool> {
         return false;
     }
 
@@ -167,7 +167,7 @@ public:
         _vtable_ptr = &model_t::_vtable;
     }
 
-    ~task() { _vtable_ptr->dtor(&_model); };
+    ~task() { _vtable_ptr->dtor(&_model); }
 
     task& operator=(const task&) = delete;
 

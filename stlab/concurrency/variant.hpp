@@ -106,3 +106,4 @@ constexpr auto index(const boost::variant<Types...>& v) {
 } // namespace stlab
 
 #endif
+

@@ -310,7 +310,7 @@ auto get_process_state(const stlab::optional<T>& x)
 }
 
 template <typename T>
-auto get_process_state(const stlab::optional<T>& x)
+auto get_process_state(const stlab::optional<T>&)
     -> std::enable_if_t<!has_process_state_v<T>, process_state_scheduled> {
     return await_forever;
 }
@@ -331,7 +331,7 @@ auto set_process_error(P& process, std::exception_ptr&& error)
 }
 
 template <typename P, typename... U>
-auto set_process_error(P&, std::exception_ptr&& error)
+auto set_process_error(P&, std::exception_ptr&&)
     -> std::enable_if_t<!has_set_process_error_v<P, U...>, void> {}
 
 /**************************************************************************************************/
@@ -902,8 +902,8 @@ struct shared_process
                         // we were cancelled
                         // if (!_this->_timeout_function_active) return;
 
-                        lock_t lock(_this->_timeout_function_control, std::try_to_lock);
-                        if (!lock) continue;
+                        lock_t _lock(_this->_timeout_function_control, std::try_to_lock);
+                        if (!_lock) continue;
 
                         // we were cancelled
                         // if (!_this->_timeout_function_active) return;
@@ -1343,8 +1343,8 @@ public:
     void swap(receiver& x) noexcept { std::swap(*this, x); }
 
     inline friend void swap(receiver& x, receiver& y) noexcept { x.swap(y); }
-    inline friend bool operator==(const receiver& x, const receiver& y) { return x._p == y._p; };
-    inline friend bool operator!=(const receiver& x, const receiver& y) { return !(x == y); };
+    inline friend bool operator==(const receiver& x, const receiver& y) { return x._p == y._p; }
+    inline friend bool operator!=(const receiver& x, const receiver& y) { return !(x == y); }
 
     bool ready() const { return _ready; }
 
@@ -1429,8 +1429,8 @@ public:
     inline friend void swap(sender& x, sender& y) noexcept { x.swap(y); }
     inline friend bool operator==(const sender& x, const sender& y) {
         return x._p.lock() == y._p.lock();
-    };
-    inline friend bool operator!=(const sender& x, const sender& y) { return !(x == y); };
+    }
+    inline friend bool operator!=(const sender& x, const sender& y) { return !(x == y); }
 
     void close() {
         auto p = _p.lock();
@@ -1478,8 +1478,8 @@ public:
     inline friend void swap(sender& x, sender& y) noexcept { x.swap(y); }
     inline friend bool operator==(const sender& x, const sender& y) {
         return x._p.lock() == y._p.lock();
-    };
-    inline friend bool operator!=(const sender& x, const sender& y) { return !(x == y); };
+    }
+    inline friend bool operator!=(const sender& x, const sender& y) { return !(x == y); }
 
     void close() {
         auto p = _p.lock();

@@ -72,3 +72,4 @@ const boost::none_t nullopt((boost::none_t::init_tag()));
 } // namespace stlab
 
 #endif
+
