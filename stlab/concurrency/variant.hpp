@@ -20,7 +20,13 @@
 // If using of boost::variant shall be enforced, set the define STLAB_FORCE_BOOST_VARIANT
 
 #ifdef STLAB_FORCE_BOOST_VARIANT
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+
 #include <boost/variant.hpp>
+#pragma clang diagnostic pop
 #define STLAB_VARIANT STLAB_BOOST_VARIANT
 #endif
 
@@ -34,7 +40,13 @@
 #endif
 
 #ifndef STLAB_VARIANT
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+
 #include <boost/variant.hpp>
+#pragma clang diagnostic pop
 #define STLAB_VARIANT STLAB_BOOST_VARIANT
 #endif
 
