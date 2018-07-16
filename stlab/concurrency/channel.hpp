@@ -331,9 +331,9 @@ auto set_process_error(P& process, std::exception_ptr&& error)
     process.set_error(std::move(error));
 }
 
-template <typename P, typename... U>
+template <typename P>
 auto set_process_error(P&, std::exception_ptr&&)
-    -> std::enable_if_t<!has_set_process_error_v<P, U...>, void> {}
+    -> std::enable_if_t<!has_set_process_error_v<P>, void> {}
 
 /**************************************************************************************************/
 
