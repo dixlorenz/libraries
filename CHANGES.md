@@ -1,3 +1,17 @@
+## v1.3.3 - 2018 - October - 25
+
+- Fixed Issues 
+   - [#154](https://github.com/stlab/libraries/issues/154) : Compilation error with gcc
+   - Race condition in timed blocking_get
+
+- Enhancements
+   - The library can now be included as cmake dependency (Many thanks to Austin McCartney)  
+    
+## v1.3.2 - 2018 - July - 28
+
+- Fixed Issues 
+   - [#169](https://github.com/stlab/libraries/issues/169) : when_all() appears to ignore the passed-in executor
+
 ## v1.3.1 - 2018 - July - 21
 
 - Fixed Issues 

@@ -59,7 +59,7 @@ struct shared_state_result : shared_state {
 template <typename T, typename E>
 future<std::decay_t<T>> make_ready_future(T&& x, E executor) {
     auto p = package<std::decay_t<T>(std::decay_t<T>)>(
-        std::move(executor), [](auto&& _x) { return std::forward<decltype(_x)>(_x); });
+        std::move(executor), [](auto&& x) { return std::forward<decltype(x)>(x); });
     p.first(std::forward<T>(x));
     return p.second;
 }
@@ -119,19 +119,19 @@ stlab::optional<T> blocking_get(future<T> x, const std::chrono::nanoseconds& tim
     auto state = std::make_shared<detail::shared_state_result<T>>();
     auto hold =
         std::move(x).recover(immediate_executor, [_weak_state = make_weak_ptr(state)](auto&& r) {
-            auto _state = _weak_state.lock();
-            if (!_state) {
+            auto state = _weak_state.lock();
+            if (!state) {
                 return;
             }
             if (r.error())
-                _state->error = *std::forward<decltype(r)>(r).error();
+                state->error = *std::forward<decltype(r)>(r).error();
             else
-                _state->result = std::move(*std::forward<decltype(r)>(r).get_try());
+                state->result = std::move(*std::forward<decltype(r)>(r).get_try());
             {
-                std::unique_lock<std::mutex> lock{_state->m};
-                _state->flag = true;
+                std::unique_lock<std::mutex> lock{state->m};
+                state->flag = true;
+                state->condition.notify_one();
             }
-            _state->condition.notify_one();
         });
 
     {
@@ -177,16 +177,16 @@ inline bool blocking_get(future<void> x, const std::chrono::nanoseconds& timeout
     auto state = std::make_shared<detail::shared_state>();
     auto hold =
         std::move(x).recover(immediate_executor, [_weak_state = make_weak_ptr(state)](auto&& r) {
-            auto _state = _weak_state.lock();
-            if (!_state) {
+            auto state = _weak_state.lock();
+            if (!state) {
                 return;
             }
-            if (r.error()) _state->error = *std::forward<decltype(r)>(r).error();
+            if (r.error()) state->error = *std::forward<decltype(r)>(r).error();
             {
-                std::unique_lock<std::mutex> lock(_state->m);
-                _state->flag = true;
+                std::unique_lock<std::mutex> lock(state->m);
+                state->flag = true;
+                state->condition.notify_one();
             }
-            _state->condition.notify_one();
         });
 
     {
