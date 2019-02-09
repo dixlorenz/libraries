@@ -63,9 +63,9 @@ private:
         dispatch_group_t _group = dispatch_group_create();
         ~group() {
             dispatch_group_wait(_group, DISPATCH_TIME_FOREVER);
-            #if OS_OBJECT_HAVE_OBJC_SUPPORT == 0
+#if !__has_feature(objc_arc)
             dispatch_release(_group);
-            #endif
+#endif
         }
     };
 
@@ -80,9 +80,9 @@ public:
         dispatch_group_async_f(g._group,
                                dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                                new f_t(std::move(f)), [](void* f_) {
-                                   auto _f = static_cast<f_t*>(f_);
-                                   (*_f)();
-                                   delete _f;
+                                   auto f = static_cast<f_t*>(f_);
+                                   (*f)();
+                                   delete f;
                                });
     }
 };
@@ -142,7 +142,10 @@ public:
         if (_pool == nullptr) throw std::bad_alloc();
 
         _cleanupgroup = CreateThreadpoolCleanupGroup();
-        if (_pool == nullptr) throw std::bad_alloc();
+        if (_cleanupgroup == nullptr) {
+            CloseThreadpool(_pool);
+            throw std::bad_alloc();
+        }
 
         SetThreadpoolCallbackPool(&_callBackEnvironment, _pool);
         SetThreadpoolCallbackCleanupGroup(&_callBackEnvironment, _cleanupgroup, nullptr);
